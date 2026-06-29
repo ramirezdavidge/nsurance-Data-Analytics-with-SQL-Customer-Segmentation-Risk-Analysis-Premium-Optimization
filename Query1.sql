@@ -179,3 +179,28 @@ left join DIM_PRIOR_INSURANCE i on s.Prior_Insurance=i.Prior_Insurance
 select *
 into fact_insurance
 from t_fact_insurance
+
+
+----preguntas
+--1. ¿Cuál es la prima promedio (Premium_Amount) según el tipo de póliza y región?
+select 
+	p.Policy_Type,
+	r.Region,
+	avg(f.Premium_Amount) AS prima_promedio
+from fact_insurance f
+ join DIM_POLIZA p  ON P.ID_POLIZA=F.ID_POLIZA
+join DIM_REGION r ON R.ID_REGION=F.ID_REGION
+Group by p.Policy_Type,r.region
+
+
+----2. ¿Qué fuente de captación (Source_of_Lead) genera más conversiones?
+
+select * from fact_insurance
+select * from DIM_LEAD;
+
+select 
+SUM(CASE WHEN Conversion_Status=1 then 1 else 0 end) as total_conversiones,
+count(*) as cantidad_leads,
+cast(1.0*SUM(CASE WHEN Conversion_Status=1 then 1 else 0 end)/count(*) as decimal(5,2))  as ratio_conversion
+from fact_insurance
+

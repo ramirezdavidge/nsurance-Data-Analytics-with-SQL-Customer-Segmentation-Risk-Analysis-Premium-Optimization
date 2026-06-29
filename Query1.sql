@@ -69,7 +69,43 @@ GO
 
 ---Creación de un Identificador Unico POR COLUMNA
 Alter table STG_SEGURO_AUTO
-ADD Cliente_Natural_ID INT IDENTITY(1,1)
+ADD Cliente_Natural_ID INT IDENTITY(1,1);
+
+
+-- -- -- -- -- -- --
+-- DATA CLEANING --
+-- -- -- -- -- -- --
+--Eliminar duplicados
+WITH DUPLICADOS AS
+(
+SELECT *,
+ROW_NUMBER() OVER
+(
+PARTITION BY Cliente_Natural_ID
+ORDER BY Cliente_Natural_ID
+) AS fila
+
+FROM [dbo].[STG_SEGURO_AUTO]
+)
+
+DELETE FROM DUPLICADOS
+WHERE fila > 1;
+
+--Control de nulos
+UPDATE [dbo].[STG_SEGURO_AUTO]
+SET 
+    Credit_Score = 0
+WHERE Credit_Score IS NULL;
+
+
+UPDATE [dbo].[STG_SEGURO_AUTO]
+SET 
+    Claims_Frequency = 0
+WHERE Claims_Frequency IS NULL;
+
+
+
+
 
 ----CREACION DE DIMENSIONES
 --DIM CLIENTE

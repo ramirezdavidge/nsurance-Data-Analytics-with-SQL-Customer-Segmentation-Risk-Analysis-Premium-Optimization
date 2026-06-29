@@ -52,7 +52,7 @@ El dataset contiene información relacionada con:
 - Frecuencia y severidad de reclamos.
 - Ajustes aplicados sobre la prima.
 
-
+![image_alt]([https://github.com/f3rnandor/test123/blob/4f17798d4f71dfb932ca020ca256bc5d768aef88/github-logo.png](https://github.com/ramirezdavidge/nsurance-Data-Analytics-with-SQL-Customer-Segmentation-Risk-Analysis-Premium-Optimization/blob/0604893f2957c806254271e22504103327f483c4/Pictures/Dataset.PNG))
 ![Insurance Dataset](.\Pictures\Dataset.PNG)
 
 ## Principales variables analizadas

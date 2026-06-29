@@ -411,3 +411,140 @@ FROM base;
 INNER JOIN DIM_POLIZA P 
     ON P.ID_POLIZA = F.ID_POLIZA;
 	
+--PREGUNTA 11: Clientes con oportunidad de subir precio
+SELECT
+c.Cliente_Natural_ID,
+AVG(f.Premium_Amount) Prima,
+c.Credit_Score,
+f.Claims_Frequency
+FROM fact_insurance f
+INNER JOIN DIM_CLIENTE c
+ON f.Cliente_Natural_ID=c.Cliente_Natural_ID
+WHERE
+c.Credit_Score>750
+AND f.Claims_Frequency=0
+GROUP BY
+c.Cliente_Natural_ID,
+c.Credit_Score,
+f.Claims_Frequency;
+--12. Rentabilidad por póliza
+SELECT
+p.Policy_Type,
+SUM(
+f.Premium_Amount
+-
+f.Total_Discounts
+-
+f.Claims_Adjustment
+
+)AS Rentabilidad
+
+FROM fact_insurance f
+INNER JOIN DIM_POLIZA p
+ON f.ID_POLIZA=p.ID_POLIZA
+GROUP BY p.Policy_Type
+ORDER BY Rentabilidad DESC;
+
+---13.  Score de conversión
+SELECT
+
+c.Cliente_Natural_ID,
+(
+f.Website_Visits
++
+f.Quotes_Requested
++
+(c.Credit_Score/100)
+-
+f.Time_to_Conversion
+)
+AS Conversion_Score
+FROM fact_insurance f
+join DIM_CLIENTE c on c.Cliente_Natural_ID=f.Cliente_Natural_ID
+
+--pregunta 14:KPI ejecutivo final
+SELECT
+
+
+r.Region,
+
+
+l.Source_of_Lead,
+
+
+AVG(f.Premium_Amount) Prima,
+
+
+AVG(f.Total_Discounts) Descuento,
+
+
+AVG(
+CASE
+WHEN f.Conversion_Status=1
+THEN 1
+ELSE 0
+END
+)*100 Conversion
+
+
+FROM fact_insurance f
+
+
+JOIN DIM_REGION r
+ON f.ID_REGION=r.ID_REGION
+
+
+JOIN DIM_LEAD l
+ON f.ID_LEAD=l.ID_LEAD
+
+
+
+
+
+GROUP BY
+
+r.Region,
+l.Source_of_Lead
+
+
+ORDER BY Prima DESC;
+
+
+--PREGUNTA 15  ¿Qué factores generan mayor impacto en el precio final del seguro?
+WITH Segmentacion AS
+(
+SELECT
+f.Premium_Amount,
+p.Policy_Type,
+r.Region,
+CASE
+WHEN f.Claims_Frequency >=2
+AND c.Credit_Score <650
+THEN 'Alto Riesgo'
+WHEN f.Claims_Frequency =0
+AND c.Credit_Score >=750
+THEN 'Bajo Riesgo'
+ELSE 'Riesgo Medio'
+END AS Segmento_Riesgo
+FROM fact_insurance f
+INNER JOIN DIM_CLIENTE c
+ON f.Cliente_Natural_ID=c.Cliente_Natural_ID
+INNER JOIN DIM_POLIZA p
+ON f.ID_POLIZA=p.ID_POLIZA
+INNER JOIN DIM_REGION r
+ON f.ID_REGION=r.ID_REGION
+)
+
+SELECT
+Segmento_Riesgo,
+Policy_Type,
+Region,
+COUNT(*) Cantidad_Clientes,
+AVG(Premium_Amount) Prima_Promedio
+FROM Segmentacion
+
+GROUP BY
+Segmento_Riesgo,
+Policy_Type,
+Region
+ORDER BY Prima_Promedio DESC;

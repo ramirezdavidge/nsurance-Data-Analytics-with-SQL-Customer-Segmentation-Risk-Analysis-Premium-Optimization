@@ -130,3 +130,52 @@ FROM STG_SEGURO_AUTO )
 SELECT SUM(1) OVER(ORDER BY Conversion_Status DESC) ID_CONVERSION,*
 INTO DIM_CONVERSION
 FROM T_DIM_CONVERSION
+
+---DIM_PRIOR_INSURANCE
+WITH T_DIM_INSURANCE AS (
+SELECT DISTINCT
+    Prior_Insurance,
+    Prior_Insurance_Premium_Adjustment
+
+FROM STG_SEGURO_AUTO )
+SELECT SUM(1) OVER(ORDER BY Prior_Insurance DESC) ID_PRIOR_INSURANCE,*
+INTO  DIM_PRIOR_INSURANCE
+FROM T_DIM_INSURANCE
+
+
+---------------------------------------------------------------------------
+-------CREACION DE FACT_SEGURO_AUTO
+---------------------------------------------------------------------------
+
+with t_fact_insurance as (
+SELECT 
+s.Cliente_Natural_ID,
+s.Conversion_Status,
+s.Married_Premium_Discount,
+i.ID_PRIOR_INSURANCE,
+s.Claims_Frequency,
+s.Claims_Severity,
+s.Claims_Adjustment,
+s.Premium_Amount,
+s.Safe_Driver_Discount,
+s.Multi_Policy_Discount,
+s.Bundling_Discount,
+s.Total_Discounts,
+s.Time_Since_First_Contact,
+s.Website_Visits,
+s.Inquiries,
+s.Quotes_Requested,
+s.Time_to_Conversion,
+s.Premium_Adjustment_Credit,
+p.ID_POLIZA,
+r.ID_REGION,
+l.ID_LEAD
+FROM STG_SEGURO_AUTO s
+left join DIM_POLIZA p ON s.Policy_Type=p.Policy_Type
+left join DIM_REGION r ON s.region=r.region
+left join DIM_LEAD l ON  s.Source_of_Lead=l.Source_of_Lead
+left join DIM_PRIOR_INSURANCE i on s.Prior_Insurance=i.Prior_Insurance
+)
+select *
+into fact_insurance
+from t_fact_insurance

@@ -165,6 +165,87 @@ Contiene información relacionada con canales comerciales:
 Permite evaluar el impacto del historial previo de seguros.
 
 ---
+## Creación de Dimensiones
+
+### DIM_CLIENTE
+
+```sql
+WITH t_dim_cliente AS (
+    SELECT
+        Cliente_Natural_ID,
+        Age,
+        Is_Senior,
+        Marital_Status,
+        Credit_Score
+    FROM STG_SEGURO_AUTO
+)
+SELECT *
+INTO DIM_CLIENTE
+FROM t_dim_cliente;
+```
+
+### DIM_POLIZA
+
+```sql
+WITH T_DIM_POLIZA AS (
+    SELECT DISTINCT
+        Policy_Type,
+        Policy_Adjustment
+    FROM STG_SEGURO_AUTO
+)
+SELECT
+    SUM(1) OVER (ORDER BY Policy_Type DESC) AS ID_POLIZA,
+    *
+INTO DIM_POLIZA
+FROM T_DIM_POLIZA;
+```
+
+### DIM_REGION
+
+```sql
+WITH T_DIM_REGION AS (
+    SELECT DISTINCT
+        Region,
+        Premium_Adjustment_Region
+    FROM STG_SEGURO_AUTO
+)
+SELECT
+    SUM(1) OVER (ORDER BY Region DESC) AS ID_REGION,
+    *
+INTO DIM_REGION
+FROM T_DIM_REGION;
+```
+
+### DIM_LEAD
+
+```sql
+WITH T_DIM_LEAD AS (
+    SELECT DISTINCT
+        Source_of_Lead
+    FROM STG_SEGURO_AUTO
+)
+SELECT
+    SUM(1) OVER (ORDER BY Source_of_Lead DESC) AS ID_LEAD,
+    *
+INTO DIM_LEAD
+FROM T_DIM_LEAD;
+```
+
+### DIM_PRIOR_INSURANCE
+
+```sql
+WITH T_DIM_INSURANCE AS (
+    SELECT DISTINCT
+        Prior_Insurance,
+        Prior_Insurance_Premium_Adjustment
+    FROM STG_SEGURO_AUTO
+)
+SELECT
+    SUM(1) OVER (ORDER BY Prior_Insurance DESC) AS ID_PRIOR_INSURANCE,
+    *
+INTO DIM_PRIOR_INSURANCE
+FROM T_DIM_INSURANCE;
+```
 
 # Tabla de Hechos
 
@@ -180,7 +261,48 @@ Contiene las métricas principales del análisis:
 - Ajustes financieros.
 
 ---
+## Creación de la Tabla de Hechos
 
+### FACT_INSURANCE
+
+```sql
+WITH t_fact_insurance AS (
+    SELECT
+        s.Cliente_Natural_ID,
+        s.Conversion_Status,
+        s.Married_Premium_Discount,
+        i.ID_PRIOR_INSURANCE,
+        s.Claims_Frequency,
+        s.Claims_Severity,
+        s.Claims_Adjustment,
+        s.Premium_Amount,
+        s.Safe_Driver_Discount,
+        s.Multi_Policy_Discount,
+        s.Bundling_Discount,
+        s.Total_Discounts,
+        s.Time_Since_First_Contact,
+        s.Website_Visits,
+        s.Inquiries,
+        s.Quotes_Requested,
+        s.Time_to_Conversion,
+        s.Premium_Adjustment_Credit,
+        p.ID_POLIZA,
+        r.ID_REGION,
+        l.ID_LEAD
+    FROM STG_SEGURO_AUTO s
+    LEFT JOIN DIM_POLIZA p
+        ON s.Policy_Type = p.Policy_Type
+    LEFT JOIN DIM_REGION r
+        ON s.Region = r.Region
+    LEFT JOIN DIM_LEAD l
+        ON s.Source_of_Lead = l.Source_of_Lead
+    LEFT JOIN DIM_PRIOR_INSURANCE i
+        ON s.Prior_Insurance = i.Prior_Insurance
+)
+SELECT *
+INTO FACT_INSURANCE
+FROM t_fact_insurance;
+```
 # Análisis Exploratorio de Datos (EDA) e Insights
 
 ## Pregunta #1
@@ -875,11 +997,6 @@ La mayor prima promedio corresponde a Alto Riesgo con Full Coverage en la regió
 
 ---
 
-# Conclusiones Generales del Proyecto
-
-El análisis desarrollado permitió construir una solución analítica basada en SQL Server orientada a la toma de decisiones dentro del sector asegurador.
-
-Principales hallazgos:
 
 # Conclusiones Generales del Proyecto
 

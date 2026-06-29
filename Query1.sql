@@ -204,3 +204,70 @@ count(*) as cantidad_leads,
 cast(1.0*SUM(CASE WHEN Conversion_Status=1 then 1 else 0 end)/count(*) as decimal(5,2))  as ratio_conversion
 from fact_insurance
 
+---3. ¿Cuál es el impacto de los descuentos sobre la prima final?
+SELECT
+CASE WHEN Total_Discounts > 100 THEN 'Alto Descuento' ELSE 'Descuento Normal'
+END AS Categoria_Descuento,
+
+AVG(Premium_Amount) AS Prima_Promedio,
+
+AVG(Total_Discounts) AS Descuento_Promedio
+
+FROM fact_insurance
+
+GROUP BY
+CASE
+WHEN Total_Discounts > 100
+THEN 'Alto Descuento'
+ELSE 'Descuento Normal'
+END;
+
+---4. ¿Qué perfiles de clientes tienen mayor probabilidad de conversión?
+select * from dim_cliente  --530 800  tengo edades de 18 a 90, credito de 530 a 800,married_status single o married
+--Creación de Perfiles
+WITH PERFILES AS (
+SELECT
+    CASE
+        WHEN c.age BETWEEN 18 AND 25
+             AND c.Credit_Score BETWEEN 530 AND 619
+             AND UPPER(c.Marital_Status) = 'SINGLE'
+        THEN 'Perfil 1: Riesgo alto'
+
+        WHEN c.age BETWEEN 36 AND 55
+             AND c.Credit_Score BETWEEN 620 AND 699
+             AND UPPER(c.Marital_Status) IN ('SINGLE', 'MARRIED')
+        THEN 'Perfil 2: Riesgo medio'
+
+        WHEN c.age BETWEEN 56 AND 90
+             AND c.Credit_Score BETWEEN 700 AND 800
+             AND UPPER(c.Marital_Status) = 'MARRIED'
+        THEN 'Perfil 3: Riesgo bajo / Buen crédito'
+
+        ELSE 'Sin perfil'
+    END AS Perfil,
+	f.Conversion_Status
+FROM fact_insurance f
+ inner join DIM_CLIENTE c ON c.Cliente_Natural_ID=f.Cliente_Natural_ID 
+ )
+ SELECT Perfil,
+	sum(Cast(Conversion_Status as int)) as cnt_conversiones,
+	count(*) as  total_clientes,
+	1.0*sum(Cast(Conversion_Status as int))/count(*) as ratio
+ FROM PERFILES
+ group by Perfil
+
+ ---5. ¿Cuál es el impacto del historial previo de seguro en el precio?
+ SELECT
+pp.Prior_Insurance,
+AVG(f.Premium_Amount) Prima_Promedio,
+COUNT(*) Clientes
+FROM fact_insurance f
+
+INNER JOIN DIM_PRIOR_INSURANCE pp
+ON f.ID_PRIOR_INSURANCE=pp.ID_PRIOR_INSURANCE
+
+GROUP BY pp.Prior_Insurance
+
+ORDER BY Prima_Promedio DESC;
+
+

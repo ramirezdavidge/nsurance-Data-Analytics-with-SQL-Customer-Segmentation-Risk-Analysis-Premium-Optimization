@@ -1,0 +1,2 @@
+# nsurance-Data-Analytics-with-SQL-Customer-Segmentation-Risk-Analysis-Premium-Optimization
+SQL project focused on analyzing Personal Auto Insurance data. This project explores customer segmentation, policy conversion, retention, claim risk, and premium optimization through advanced SQL queries. It includes data cleaning, aggregation, KPI calculations, and business insights to support executive decision-making and dashboard development.
